@@ -16,9 +16,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TeamSerializer(serializers.ModelSerializer):
+    member_count = serializers.SerializerMethodField()
+    
     class Meta:
         model = Team
-        fields = ['_id', 'name', 'description', 'created_at']
+        fields = ['_id', 'name', 'description', 'created_at', 'member_count']
+    
+    def get_member_count(self, obj):
+        return User.objects.filter(team_id=str(obj._id)).count()
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -28,9 +33,26 @@ class ActivitySerializer(serializers.ModelSerializer):
 
 
 class LeaderboardSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    team_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = Leaderboard
-        fields = ['_id', 'user_id', 'team_id', 'total_calories', 'total_activities', 'rank', 'updated_at']
+        fields = ['_id', 'user_id', 'team_id', 'user_name', 'team_name', 'total_calories', 'total_activities', 'rank', 'updated_at']
+    
+    def get_user_name(self, obj):
+        try:
+            user = User.objects.get(_id=obj.user_id)
+            return user.name
+        except User.DoesNotExist:
+            return 'Unknown User'
+    
+    def get_team_name(self, obj):
+        try:
+            team = Team.objects.get(_id=obj.team_id)
+            return team.name
+        except Team.DoesNotExist:
+            return 'No Team'
 
 
 class WorkoutSerializer(serializers.ModelSerializer):
